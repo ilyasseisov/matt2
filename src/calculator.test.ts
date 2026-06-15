@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createCalculator,
+  pressDecimal,
   pressDigit,
   pressEquals,
   pressOperator,
@@ -47,5 +48,27 @@ describe('Calculator', () => {
     calc = pressDigit(calc.state, '4');
     calc = pressEquals(calc.state);
     expect(calc.display).toBe('2.5');
+  });
+
+  it('formats floating-point addition cleanly', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '0');
+    calc = pressDecimal(calc.state);
+    calc = pressDigit(calc.state, '1');
+    calc = pressOperator(calc.state, '+');
+    calc = pressDigit(calc.state, '0');
+    calc = pressDecimal(calc.state);
+    calc = pressDigit(calc.state, '2');
+    calc = pressEquals(calc.state);
+    expect(calc.display).toBe('0.3');
+  });
+
+  it('allows only one decimal point per entry', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '3');
+    calc = pressDecimal(calc.state);
+    calc = pressDecimal(calc.state);
+    calc = pressDigit(calc.state, '5');
+    expect(calc.display).toBe('3.5');
   });
 });

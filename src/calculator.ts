@@ -24,6 +24,39 @@ export function createCalculator(): CalculatorResult {
   };
 }
 
+const MAX_DISPLAY_LENGTH = 20;
+
+export function formatDisplay(value: number): string {
+  if (!Number.isFinite(value)) {
+    return 'Error';
+  }
+
+  let formatted = Number(value.toPrecision(12)).toString();
+
+  if (formatted.includes('.')) {
+    formatted = formatted.replace(/\.?0+$/, '');
+  }
+
+  if (formatted.length > MAX_DISPLAY_LENGTH) {
+    return 'Error';
+  }
+
+  return formatted;
+}
+
+export function pressDecimal(state: CalculatorState): CalculatorResult {
+  if (state.entry?.includes('.')) {
+    return { state, display: state.entry };
+  }
+
+  const entry = state.entry === null ? '0.' : `${state.entry}.`;
+
+  return {
+    state: { ...state, entry, error: false },
+    display: entry,
+  };
+}
+
 export function pressDigit(
   state: CalculatorState,
   digit: string,
@@ -56,7 +89,8 @@ export function pressOperator(
       pendingOperator: op,
       entry: null,
     },
-    display: String(accumulator ?? '0'),
+    display:
+      accumulator !== null ? formatDisplay(accumulator) : '0',
   };
 }
 
@@ -79,7 +113,11 @@ function applyOperator(
 
 export function pressEquals(state: CalculatorState): CalculatorResult {
   if (state.pendingOperator === null || state.entry === null) {
-    const display = state.entry ?? String(state.accumulator ?? '0');
+    const display =
+      state.entry ??
+      (state.accumulator !== null
+        ? formatDisplay(state.accumulator)
+        : '0');
     return { state, display };
   }
 
@@ -96,6 +134,6 @@ export function pressEquals(state: CalculatorState): CalculatorResult {
       entry: null,
       error: false,
     },
-    display: String(result),
+    display: formatDisplay(result),
   };
 }
