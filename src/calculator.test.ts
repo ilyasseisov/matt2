@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createCalculator,
+  pressClear,
   pressDecimal,
   pressDigit,
   pressEquals,
@@ -70,5 +71,58 @@ describe('Calculator', () => {
     calc = pressDecimal(calc.state);
     calc = pressDigit(calc.state, '5');
     expect(calc.display).toBe('3.5');
+  });
+
+  it('evaluates chained operations left to right', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '2');
+    calc = pressOperator(calc.state, '+');
+    calc = pressDigit(calc.state, '3');
+    calc = pressOperator(calc.state, '×');
+    calc = pressDigit(calc.state, '4');
+    calc = pressEquals(calc.state);
+    expect(calc.display).toBe('20');
+  });
+
+  it('shows Error when dividing by zero', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '5');
+    calc = pressOperator(calc.state, '÷');
+    calc = pressDigit(calc.state, '0');
+    calc = pressEquals(calc.state);
+    expect(calc.display).toBe('Error');
+  });
+
+  it('recovers from Error when a digit is pressed', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '5');
+    calc = pressOperator(calc.state, '÷');
+    calc = pressDigit(calc.state, '0');
+    calc = pressEquals(calc.state);
+    calc = pressDigit(calc.state, '7');
+    expect(calc.display).toBe('7');
+  });
+
+  it('resets to zero when Clear is pressed mid-calculation', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '2');
+    calc = pressOperator(calc.state, '+');
+    calc = pressDigit(calc.state, '3');
+    calc = pressClear(calc.state);
+    expect(calc.display).toBe('0');
+    calc = pressDigit(calc.state, '9');
+    expect(calc.display).toBe('9');
+  });
+
+  it('continues calculating from a completed result', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '2');
+    calc = pressOperator(calc.state, '+');
+    calc = pressDigit(calc.state, '3');
+    calc = pressEquals(calc.state);
+    calc = pressOperator(calc.state, '×');
+    calc = pressDigit(calc.state, '4');
+    calc = pressEquals(calc.state);
+    expect(calc.display).toBe('20');
   });
 });

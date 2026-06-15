@@ -45,6 +45,18 @@ export function formatDisplay(value: number): string {
 }
 
 export function pressDecimal(state: CalculatorState): CalculatorResult {
+  if (state.error) {
+    return {
+      state: {
+        accumulator: null,
+        pendingOperator: null,
+        entry: '0.',
+        error: false,
+      },
+      display: '0.',
+    };
+  }
+
   if (state.entry?.includes('.')) {
     return { state, display: state.entry };
   }
@@ -61,6 +73,18 @@ export function pressDigit(
   state: CalculatorState,
   digit: string,
 ): CalculatorResult {
+  if (state.error) {
+    return {
+      state: {
+        accumulator: null,
+        pendingOperator: null,
+        entry: digit,
+        error: false,
+      },
+      display: digit,
+    };
+  }
+
   const entry =
     state.entry === null
       ? digit
@@ -74,13 +98,56 @@ export function pressDigit(
   };
 }
 
+function isDivideByZero(op: Operator, entry: number): boolean {
+  return op === '÷' && entry === 0;
+}
+
+function commitPendingOperation(
+  state: CalculatorState,
+): { accumulator: number | null; error: boolean } {
+  if (state.pendingOperator === null || state.entry === null) {
+    if (state.entry !== null) {
+      return { accumulator: parseFloat(state.entry), error: false };
+    }
+    return { accumulator: state.accumulator, error: false };
+  }
+
+  const entryValue = parseFloat(state.entry);
+  if (isDivideByZero(state.pendingOperator, entryValue)) {
+    return { accumulator: state.accumulator, error: true };
+  }
+
+  return {
+    accumulator: applyOperator(
+      state.accumulator ?? 0,
+      entryValue,
+      state.pendingOperator,
+    ),
+    error: false,
+  };
+}
+
 export function pressOperator(
   state: CalculatorState,
   op: Operator,
 ): CalculatorResult {
-  const entryValue = state.entry !== null ? parseFloat(state.entry) : null;
-  const accumulator =
-    entryValue !== null ? entryValue : state.accumulator;
+  if (state.error) {
+    return { state, display: 'Error' };
+  }
+
+  const { accumulator, error } = commitPendingOperation(state);
+
+  if (error) {
+    return {
+      state: {
+        ...state,
+        pendingOperator: null,
+        entry: null,
+        error: true,
+      },
+      display: 'Error',
+    };
+  }
 
   return {
     state: {
@@ -88,6 +155,7 @@ export function pressOperator(
       accumulator,
       pendingOperator: op,
       entry: null,
+      error: false,
     },
     display:
       accumulator !== null ? formatDisplay(accumulator) : '0',
@@ -112,6 +180,10 @@ function applyOperator(
 }
 
 export function pressEquals(state: CalculatorState): CalculatorResult {
+  if (state.error) {
+    return { state, display: 'Error' };
+  }
+
   if (state.pendingOperator === null || state.entry === null) {
     const display =
       state.entry ??
@@ -121,9 +193,22 @@ export function pressEquals(state: CalculatorState): CalculatorResult {
     return { state, display };
   }
 
+  const entryValue = parseFloat(state.entry);
+  if (isDivideByZero(state.pendingOperator, entryValue)) {
+    return {
+      state: {
+        ...state,
+        pendingOperator: null,
+        entry: null,
+        error: true,
+      },
+      display: 'Error',
+    };
+  }
+
   const result = applyOperator(
     state.accumulator ?? 0,
-    parseFloat(state.entry),
+    entryValue,
     state.pendingOperator,
   );
 
@@ -136,4 +221,8 @@ export function pressEquals(state: CalculatorState): CalculatorResult {
     },
     display: formatDisplay(result),
   };
+}
+
+export function pressClear(_state: CalculatorState): CalculatorResult {
+  return createCalculator();
 }
