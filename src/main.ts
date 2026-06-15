@@ -14,6 +14,9 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 
 let calc: CalculatorResult = createCalculator();
 
+const calculator = document.createElement('div');
+calculator.className = 'calculator';
+
 const display = document.createElement('div');
 display.className = 'display';
 display.textContent = calc.display;
@@ -25,41 +28,67 @@ function renderDisplay(): void {
   display.textContent = calc.display;
 }
 
-function addButton(label: string, onClick: () => void): void {
+function addButton(
+  label: string,
+  gridArea: string,
+  onClick: () => void,
+): void {
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = label;
+  button.style.gridArea = gridArea;
   button.addEventListener('click', onClick);
   buttons.appendChild(button);
 }
 
-for (const digit of ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']) {
-  addButton(digit, () => {
-    calc = pressDigit(calc.state, digit);
-    renderDisplay();
-  });
-}
-
-addButton('.', () => {
-  calc = pressDecimal(calc.state);
-  renderDisplay();
-});
-
-addButton('C', () => {
+addButton('C', 'clear', () => {
   calc = pressClear(calc.state);
   renderDisplay();
 });
 
-for (const op of ['+', '−', '×', '÷'] as Operator[]) {
-  addButton(op, () => {
+const digitRows: Array<[string, string, string]> = [
+  ['7', '8', '9'],
+  ['4', '5', '6'],
+  ['1', '2', '3'],
+];
+
+for (const [d7, d8, d9] of digitRows) {
+  for (const digit of [d7, d8, d9]) {
+    addButton(digit, `d${digit}`, () => {
+      calc = pressDigit(calc.state, digit);
+      renderDisplay();
+    });
+  }
+}
+
+addButton('0', 'd0', () => {
+  calc = pressDigit(calc.state, '0');
+  renderDisplay();
+});
+
+addButton('.', 'decimal', () => {
+  calc = pressDecimal(calc.state);
+  renderDisplay();
+});
+
+const operators: Array<[Operator, string]> = [
+  ['÷', 'divide'],
+  ['×', 'multiply'],
+  ['−', 'subtract'],
+  ['+', 'add'],
+];
+
+for (const [op, area] of operators) {
+  addButton(op, area, () => {
     calc = pressOperator(calc.state, op);
     renderDisplay();
   });
 }
 
-addButton('=', () => {
+addButton('=', 'equals', () => {
   calc = pressEquals(calc.state);
   renderDisplay();
 });
 
-app.append(display, buttons);
+calculator.append(display, buttons);
+app.append(calculator);
