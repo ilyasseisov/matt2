@@ -85,6 +85,11 @@ for (const [op, area] of operators) {
   });
 }
 
+addButton('^', 'power', () => {
+  calc = pressOperator(calc.state, '^');
+  renderDisplay();
+});
+
 addButton('=', 'equals', () => {
   calc = pressEquals(calc.state);
   renderDisplay();

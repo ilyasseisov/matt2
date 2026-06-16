@@ -125,4 +125,90 @@ describe('Calculator', () => {
     calc = pressEquals(calc.state);
     expect(calc.display).toBe('20');
   });
+
+  it('raises one number to the power of another', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '2');
+    calc = pressOperator(calc.state, '^');
+    calc = pressDigit(calc.state, '3');
+    calc = pressEquals(calc.state);
+    expect(calc.display).toBe('8');
+  });
+
+  it('evaluates power in a left-to-right chain', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '2');
+    calc = pressOperator(calc.state, '+');
+    calc = pressDigit(calc.state, '3');
+    calc = pressOperator(calc.state, '^');
+    calc = pressDigit(calc.state, '2');
+    calc = pressEquals(calc.state);
+    expect(calc.display).toBe('25');
+  });
+
+  it('shows Error for zero raised to zero', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '0');
+    calc = pressOperator(calc.state, '^');
+    calc = pressDigit(calc.state, '0');
+    calc = pressEquals(calc.state);
+    expect(calc.display).toBe('Error');
+  });
+
+  it('shows Error for a negative base with a non-integer exponent', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '2');
+    calc = pressOperator(calc.state, '−');
+    calc = pressDigit(calc.state, '5');
+    calc = pressEquals(calc.state);
+    calc = pressOperator(calc.state, '^');
+    calc = pressDecimal(calc.state);
+    calc = pressDigit(calc.state, '5');
+    calc = pressEquals(calc.state);
+    expect(calc.display).toBe('Error');
+  });
+
+  it('shows Error for a non-finite power result', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '1');
+    calc = pressDigit(calc.state, '0');
+    calc = pressOperator(calc.state, '^');
+    calc = pressDigit(calc.state, '4');
+    calc = pressDigit(calc.state, '0');
+    calc = pressDigit(calc.state, '0');
+    calc = pressEquals(calc.state);
+    expect(calc.display).toBe('Error');
+  });
+
+  it('recovers from a power Error when a digit is pressed', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '0');
+    calc = pressOperator(calc.state, '^');
+    calc = pressDigit(calc.state, '0');
+    calc = pressEquals(calc.state);
+    calc = pressDigit(calc.state, '4');
+    expect(calc.display).toBe('4');
+  });
+
+  it('ignores power while in Error state', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '0');
+    calc = pressOperator(calc.state, '^');
+    calc = pressDigit(calc.state, '0');
+    calc = pressEquals(calc.state);
+    calc = pressOperator(calc.state, '^');
+    expect(calc.display).toBe('Error');
+  });
+
+  it('continues calculating from a power result', () => {
+    let calc = createCalculator();
+    calc = pressDigit(calc.state, '2');
+    calc = pressOperator(calc.state, '^');
+    calc = pressDigit(calc.state, '3');
+    calc = pressEquals(calc.state);
+    calc = pressOperator(calc.state, '+');
+    calc = pressDigit(calc.state, '1');
+    calc = pressEquals(calc.state);
+    expect(calc.display).toBe('9');
+  });
 });

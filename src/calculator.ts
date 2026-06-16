@@ -1,4 +1,4 @@
-export type Operator = '+' | '−' | '×' | '÷';
+export type Operator = '+' | '−' | '×' | '÷' | '^';
 
 export interface CalculatorState {
   accumulator: number | null;
@@ -102,6 +102,30 @@ function isDivideByZero(op: Operator, entry: number): boolean {
   return op === '÷' && entry === 0;
 }
 
+function isPowerError(base: number, exponent: number): boolean {
+  if (base === 0 && exponent === 0) {
+    return true;
+  }
+  if (base < 0 && !Number.isInteger(exponent)) {
+    return true;
+  }
+  return !Number.isFinite(Math.pow(base, exponent));
+}
+
+function isOperationError(
+  op: Operator,
+  base: number,
+  entry: number,
+): boolean {
+  if (op === '÷') {
+    return isDivideByZero(op, entry);
+  }
+  if (op === '^') {
+    return isPowerError(base, entry);
+  }
+  return false;
+}
+
 function commitPendingOperation(
   state: CalculatorState,
 ): { accumulator: number | null; error: boolean } {
@@ -113,7 +137,7 @@ function commitPendingOperation(
   }
 
   const entryValue = parseFloat(state.entry);
-  if (isDivideByZero(state.pendingOperator, entryValue)) {
+  if (isOperationError(state.pendingOperator, state.accumulator ?? 0, entryValue)) {
     return { accumulator: state.accumulator, error: true };
   }
 
@@ -176,6 +200,8 @@ function applyOperator(
       return accumulator * entry;
     case '÷':
       return accumulator / entry;
+    case '^':
+      return Math.pow(accumulator, entry);
   }
 }
 
@@ -194,7 +220,7 @@ export function pressEquals(state: CalculatorState): CalculatorResult {
   }
 
   const entryValue = parseFloat(state.entry);
-  if (isDivideByZero(state.pendingOperator, entryValue)) {
+  if (isOperationError(state.pendingOperator, state.accumulator ?? 0, entryValue)) {
     return {
       state: {
         ...state,

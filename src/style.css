@@ -36,7 +36,7 @@
     'd4 d5 d6 multiply'
     'd1 d2 d3 subtract'
     'd0 d0 decimal add'
-    '. . . equals';
+    'sqrt power . equals';
   gap: 0.5rem;
 }
 
